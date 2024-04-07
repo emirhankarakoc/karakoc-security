@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/users")
 @AllArgsConstructor
 public class UserController {
-private final MiddleController middleware;
+private final UserMiddleController middleware;
 
 
     @GetMapping
