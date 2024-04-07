@@ -17,5 +17,4 @@ public class UserManager implements UserService{
         return "dogru calisiyor.";
     }
 
-
 }

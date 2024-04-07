@@ -1,19 +1,14 @@
-package com.emirhankarakoc.Authorization.accounts;
+package com.emirhankarakoc.Authorization.jwt;
 
-import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.emirhankarakoc.Authorization.exceptions.general.BadRequestException;
 import com.emirhankarakoc.Authorization.exceptions.general.NotfoundException;
-import com.emirhankarakoc.Authorization.jwt.JWTService;
 import com.emirhankarakoc.Authorization.users.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.emirhankarakoc.Authorization.users.User.updateUser;
 import static com.emirhankarakoc.Authorization.users.User.userToDTO;
 
 @Service
@@ -22,15 +17,11 @@ public class AccountService {
     private final UserRepository repository;
     private final JWTService jwtService;
 
-
-    public String login(LoginRequest request){
+    public UserDTO login(LoginRequest request){
         User user = repository.findByUsername(request.getUsername()).orElseThrow(()-> new NotfoundException("User not found."));
-
-        if (BCrypt.verifyer().verify(request.getPassword().toCharArray(), user.getPassword()).verified) {
-            user.setToken(jwtService.generateToken(user.getUsername()));
-            repository.save(user);
-            return user.getToken();
-
+        if (user.getPassword().equals(request.getPassword())) {
+            user.setToken(jwtService.generateToken(request.getUsername()));
+            return userToDTO(repository.save(user));
         }
         else{
             throw new BadRequestException("Username and password do not match."); // sifreler eslesmiyorsa.
@@ -45,20 +36,9 @@ public class AccountService {
         }
         User user = new User();
         user.setId(UUID.randomUUID().toString());
-        user.setCreateddatetime(LocalDateTime.now());
         user.setUsername(request.getUsername());
-        // Şifreyi BCrypt ile hashle
-        String hashedPassword = BCrypt.withDefaults().hashToString(12, request.getPassword().toCharArray());
-        user.setPassword(hashedPassword);
-        //hashle
-        user.setFirstname(request.getFirstname());
-        user.setLastname(request.getLastname());
-        user.setBirthDate(request.getBirthDate());
-        user.setUserTypeList(new ArrayList<>());
-        user.getUserTypeList().add(request.getUserType());
-
+        user.setPassword(request.getPassword());
         user.setToken(jwtService.generateToken(user.getUsername()));
-        updateUser(user);
         return userToDTO(repository.save(user));
     }
 
